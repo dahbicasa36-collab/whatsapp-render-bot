@@ -4,15 +4,15 @@ const axios = require('axios');
 const app = express();
 app.use(bodyParser.json());
 
-// المعلومات الصحيحة اللي تأكدنا منها
+// البيانات الصحيحة الخاصة بك
 const phoneNumberId = "989354214252486"; 
 const verifyToken = "mytoken123"; 
-const accessToken = process.env.ACCESS_TOKEN;
+const accessToken = process.env.ACCESS_TOKEN; 
 
-// رابط المجموعة الخاص بك
+// رابط مجموعتك
 const groupLink = "https://chat.whatsapp.com/FvfkX4uo7UbKVxoFP9KILH";
 
-// 1. التحقق من Webhook
+// 1. رابط التحقق (Webhook Verification)
 app.get('/', (req, res) => {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
@@ -24,23 +24,32 @@ app.get('/', (req, res) => {
     res.status(403).send('Error');
 });
 
-// 2. استقبال الرسائل والرد التلقائي
+// 2. استقبال الرسائل وإرسال الترحيب
 app.post('/', async (req, res) => {
     try {
         const body = req.body;
         if (body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages) {
             const from = body.entry[0].changes[0].value.messages[0].from;
             
-            console.log("وصلت رسالة من: " + from);
+            console.log("Message Received from: " + from);
 
-            // إرسال رابط المجموعة
-            await axios.post(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
-                messaging_product: "whatsapp",
-                to: from,
-                type: "text",
-                text: { body: "مرحباً بك! إليك رابط مجموعة الواتساب الخاصة بنا: " + groupLink }
-            }, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+            // إرسال الرد الآلي
+            await axios({
+                method: "POST",
+                url: `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+                data: {
+                    messaging_product: "whatsapp",
+                    to: from,
+                    type: "text",
+                    text: { body: "مرحباً بك! 🎉\nتفضل رابط المجموعة: " + groupLink }
+                },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken}`
+                }
+            });
 
+            console.log("الرد أُرسل بنجاح!");
             res.sendStatus(200);
         } else {
             res.sendStatus(404);
@@ -52,4 +61,4 @@ app.post('/', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`السيرفر شغال بنجاح على بورت ${PORT}`));
+app.listen(PORT, () => console.log(`السيرفر شغال على بورت ${PORT}`));
