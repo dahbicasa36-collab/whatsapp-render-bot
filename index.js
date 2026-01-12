@@ -4,13 +4,21 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 
+// Render يعطي PORT تلقائياً
 const port = process.env.PORT || 3000;
+
+// المتغيرات من Environment
 const verifyToken = process.env.VERIFY_TOKEN;
 const accessToken = process.env.ACCESS_TOKEN;
 
+// Phone Number ID ديال واتساب
 const phoneNumberId = "954803041047023";
 
-// ✅ Verify webhook (GET)
+/**
+ * ============================
+ * 1) Webhook Verification
+ * ============================
+ */
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -20,25 +28,29 @@ app.get('/webhook', (req, res) => {
     console.log('✅ WEBHOOK VERIFIED');
     res.status(200).send(challenge);
   } else {
-    console.log("❌ Verification failed");
-    res.status(403).end();
+    console.log('❌ WEBHOOK VERIFICATION FAILED');
+    res.sendStatus(403);
   }
 });
 
-// ✅ Receive messages (POST)
+/**
+ * ============================
+ * 2) Receive Messages
+ * ============================
+ */
 app.post('/webhook', async (req, res) => {
   console.log("📩 Webhook received");
   console.log(JSON.stringify(req.body, null, 2));
 
   try {
-    if (
-      req.body.entry &&
-      req.body.entry[0].changes &&
-      req.body.entry[0].changes[0].value.messages &&
-      req.body.entry[0].changes[0].value.messages[0]
-    ) {
-      const from = req.body.entry[0].changes[0].value.messages[0].from;
+    const entry = req.body.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const messages = changes?.value?.messages;
 
+    if (messages && messages[0]) {
+      const from = messages[0].from; // رقم المرسل
+
+      // إرسال قالب ترحيب تلقائياً
       await axios.post(
         `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
         {
@@ -46,7 +58,7 @@ app.post('/webhook', async (req, res) => {
           to: from,
           type: "template",
           template: {
-            name: "welcome_new",
+            name: "welcome_new",   // اسم القالب فـ Meta
             language: { code: "ar" }
           }
         },
@@ -68,11 +80,20 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// Root route (اختياري فقط للاختبار)
+/**
+ * ============================
+ * 3) Test Route (اختياري)
+ * ============================
+ */
 app.get('/', (req, res) => {
-  res.send("🚀 WhatsApp Render Bot is running!");
+  res.send('🚀 WhatsApp Render Bot is running');
 });
 
+/**
+ * ============================
+ * 4) Start Server
+ * ============================
+ */
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
