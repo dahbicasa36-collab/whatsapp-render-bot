@@ -10,8 +10,8 @@ const accessToken = process.env.ACCESS_TOKEN;
 
 const phoneNumberId = "954803041047023";
 
-// Verify webhook
-app.get('/', (req, res) => {
+// ✅ Verify webhook (GET)
+app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
@@ -20,12 +20,13 @@ app.get('/', (req, res) => {
     console.log('✅ WEBHOOK VERIFIED');
     res.status(200).send(challenge);
   } else {
+    console.log("❌ Verification failed");
     res.status(403).end();
   }
 });
 
-// Receive messages
-app.post('/', async (req, res) => {
+// ✅ Receive messages (POST)
+app.post('/webhook', async (req, res) => {
   console.log("📩 Webhook received");
   console.log(JSON.stringify(req.body, null, 2));
 
@@ -65,6 +66,11 @@ app.post('/', async (req, res) => {
     console.error("❌ Error:", error.response?.data || error.message);
     res.sendStatus(200);
   }
+});
+
+// Root route (اختياري فقط للاختبار)
+app.get('/', (req, res) => {
+  res.send("🚀 WhatsApp Render Bot is running!");
 });
 
 app.listen(port, () => {
