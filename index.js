@@ -5,9 +5,9 @@ const app = express();
 app.use(express.json());
 
 // Render يعطي PORT تلقائياً
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
-// المتغيرات من Environment
+// المتغيرات من Environment في Render
 const verifyToken = process.env.VERIFY_TOKEN;
 const accessToken = process.env.ACCESS_TOKEN;
 
@@ -16,7 +16,16 @@ const phoneNumberId = "954803041047023";
 
 /**
  * ============================
- * 1) Webhook Verification
+ * 1) اختبار السيرفر
+ * ============================
+ */
+app.get('/', (req, res) => {
+  res.send('🚀 WhatsApp Render Bot is running');
+});
+
+/**
+ * ============================
+ * 2) Webhook Verification (Meta)
  * ============================
  */
 app.get('/webhook', (req, res) => {
@@ -35,7 +44,7 @@ app.get('/webhook', (req, res) => {
 
 /**
  * ============================
- * 2) Receive Messages
+ * 3) استقبال الرسائل من واتساب
  * ============================
  */
 app.post('/webhook', async (req, res) => {
@@ -58,7 +67,7 @@ app.post('/webhook', async (req, res) => {
           to: from,
           type: "template",
           template: {
-            name: "welcome_new",   // اسم القالب فـ Meta
+            name: "welcome_new",   // اسم القالب في Meta
             language: { code: "ar" }
           }
         },
@@ -82,16 +91,7 @@ app.post('/webhook', async (req, res) => {
 
 /**
  * ============================
- * 3) Test Route (اختياري)
- * ============================
- */
-app.get('/', (req, res) => {
-  res.send('🚀 WhatsApp Render Bot is running');
-});
-
-/**
- * ============================
- * 4) Start Server
+ * 4) تشغيل السيرفر
  * ============================
  */
 app.listen(port, () => {
