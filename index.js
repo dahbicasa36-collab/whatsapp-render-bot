@@ -4,30 +4,18 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 
-// Render يعطي PORT تلقائياً
 const port = process.env.PORT || 4000;
-
-// المتغيرات من Environment في Render
 const verifyToken = process.env.VERIFY_TOKEN;
 const accessToken = process.env.ACCESS_TOKEN;
 
-// Phone Number ID ديال واتساب
 const phoneNumberId = "954803041047023";
 
-/**
- * ============================
- * 1) اختبار السيرفر
- * ============================
- */
+// Route عادي باش تتأكد أن السيرفر خدام
 app.get('/', (req, res) => {
   res.send('🚀 WhatsApp Render Bot is running');
 });
 
-/**
- * ============================
- * 2) Webhook Verification (Meta)
- * ============================
- */
+// ✅ Verify Webhook (ضروري لميتا)
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -42,24 +30,20 @@ app.get('/webhook', (req, res) => {
   }
 });
 
-/**
- * ============================
- * 3) استقبال الرسائل من واتساب
- * ============================
- */
+// 📩 استقبال الرسائل
 app.post('/webhook', async (req, res) => {
   console.log("📩 Webhook received");
   console.log(JSON.stringify(req.body, null, 2));
 
   try {
-    const entry = req.body.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const messages = changes?.value?.messages;
+    if (
+      req.body.entry &&
+      req.body.entry[0].changes &&
+      req.body.entry[0].changes[0].value.messages &&
+      req.body.entry[0].changes[0].value.messages[0]
+    ) {
+      const from = req.body.entry[0].changes[0].value.messages[0].from;
 
-    if (messages && messages[0]) {
-      const from = messages[0].from; // رقم المرسل
-
-      // إرسال قالب ترحيب تلقائياً
       await axios.post(
         `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
         {
@@ -67,7 +51,7 @@ app.post('/webhook', async (req, res) => {
           to: from,
           type: "template",
           template: {
-            name: "welcome_new",   // اسم القالب في Meta
+            name: "welcome_new",
             language: { code: "ar" }
           }
         },
@@ -89,11 +73,6 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-/**
- * ============================
- * 4) تشغيل السيرفر
- * ============================
- */
 app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
