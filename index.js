@@ -1,78 +1,28 @@
 const express = require('express');
-const axios = require('axios');
-
+const bodyParser = require('body-parser');
 const app = express();
-app.use(express.json());
+app.use(bodyParser.json());
 
-const port = process.env.PORT || 4000;
-const verifyToken = process.env.VERIFY_TOKEN;
-const accessToken = process.env.ACCESS_TOKEN;
+// 1. رمز التحقق (اكتب هذا في فيسبوك)
+const verifyToken = "mytoken123"; 
 
-const phoneNumberId = "954803041047023";
-
-// Route عادي باش تتأكد أن السيرفر خدام
+// 2. التحقق من Webhook (هذا ما يطلبه فيسبوك الآن)
 app.get('/', (req, res) => {
-  res.send('🚀 WhatsApp Render Bot is running');
-});
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
 
-// ✅ Verify Webhook (ضروري لميتا)
-app.get('/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  if (mode === 'subscribe' && token === verifyToken) {
-    console.log('✅ WEBHOOK VERIFIED');
-    res.status(200).send(challenge);
-  } else {
-    console.log('❌ WEBHOOK VERIFICATION FAILED');
-    res.sendStatus(403);
-  }
-});
-
-// 📩 استقبال الرسائل
-app.post('/webhook', async (req, res) => {
-  console.log("📩 Webhook received");
-  console.log(JSON.stringify(req.body, null, 2));
-
-  try {
-    if (
-      req.body.entry &&
-      req.body.entry[0].changes &&
-      req.body.entry[0].changes[0].value.messages &&
-      req.body.entry[0].changes[0].value.messages[0]
-    ) {
-      const from = req.body.entry[0].changes[0].value.messages[0].from;
-
-      await axios.post(
-        `https://graph.facebook.com/v19.0/${phoneNumberId}/messages`,
-        {
-          messaging_product: "whatsapp",
-          to: from,
-          type: "template",
-          template: {
-            name: "welcome_new",
-            language: { code: "ar" }
-          }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json"
-          }
-        }
-      );
-
-      console.log(`✅ Auto-reply sent to ${from}`);
+    if (mode === 'subscribe' && token === verifyToken) {
+        return res.status(200).send(challenge);
     }
-
-    res.sendStatus(200);
-  } catch (error) {
-    console.error("❌ Error:", error.response?.data || error.message);
-    res.sendStatus(200);
-  }
+    res.status(403).send('Error, wrong token');
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
+// 3. استقبال الرسائل
+app.post('/', (req, res) => {
+    console.log("Message Received!");
+    res.sendStatus(200);
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
