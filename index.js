@@ -4,7 +4,7 @@ const axios = require('axios');
 const app = express();
 app.use(bodyParser.json());
 
-// البيانات الصحيحة الخاصة بك
+// البيانات التي استخرجناها من حسابك وتأكدنا منها
 const phoneNumberId = "989354214252486"; 
 const verifyToken = "mytoken123"; 
 const accessToken = process.env.ACCESS_TOKEN; 
@@ -12,7 +12,7 @@ const accessToken = process.env.ACCESS_TOKEN;
 // رابط مجموعتك
 const groupLink = "https://chat.whatsapp.com/FvfkX4uo7UbKVxoFP9KILH";
 
-// 1. رابط التحقق (Webhook Verification)
+// 1. مسار التحقق (Webhook Verification)
 app.get('/', (req, res) => {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
@@ -24,16 +24,16 @@ app.get('/', (req, res) => {
     res.status(403).send('Error');
 });
 
-// 2. استقبال الرسائل وإرسال الترحيب
+// 2. استقبال الرسائل وإرسال الترحيب التلقائي
 app.post('/', async (req, res) => {
     try {
         const body = req.body;
         if (body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages) {
             const from = body.entry[0].changes[0].value.messages[0].from;
             
-            console.log("Message Received from: " + from);
+            console.log("استلمت رسالة من: " + from);
 
-            // إرسال الرد الآلي
+            // إرسال رد الترحيب التلقائي
             await axios({
                 method: "POST",
                 url: `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
@@ -41,7 +41,7 @@ app.post('/', async (req, res) => {
                     messaging_product: "whatsapp",
                     to: from,
                     type: "text",
-                    text: { body: "مرحباً بك! 🎉\nتفضل رابط المجموعة: " + groupLink }
+                    text: { body: "مرحباً بك! 🎉\nتفضل رابط مجموعة الواتساب الخاصة بنا: " + groupLink }
                 },
                 headers: {
                     "Content-Type": "application/json",
@@ -49,7 +49,7 @@ app.post('/', async (req, res) => {
                 }
             });
 
-            console.log("الرد أُرسل بنجاح!");
+            console.log("تم إرسال رد الترحيب بنجاح!");
             res.sendStatus(200);
         } else {
             res.sendStatus(404);
@@ -61,4 +61,4 @@ app.post('/', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`السيرفر شغال على بورت ${PORT}`));
+app.listen(PORT, () => console.log(`السيرفر شغال وجاهز على بورت ${PORT}`));
