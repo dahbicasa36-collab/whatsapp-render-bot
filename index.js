@@ -46,7 +46,7 @@ app.post('/', async (req, res) => {
                     template: {
                         name: templateName,
                         language: {
-                            code: "ar" // اللغة العربية كما في صورتك للقالب
+                            code: "en_US"  // جرب تغيير ar إلى en_US
                         }
                     }
                 },
