@@ -5,11 +5,13 @@ const app = express();
 
 app.use(bodyParser.json());
 
-// البيانات من صورك (تأكد أنها مطابقة)
+// البيانات الصحيحة والمحدثة من صورك
 const phoneNumberId = "989354214252486"; 
 const verifyToken = "mytoken123"; 
 const accessToken = process.env.ACCESS_TOKEN; 
-const templateName = "welcome_new"; 
+
+// تم تغيير الاسم هنا من welcome_new إلى الاسم الموجود في حسابك
+const templateName = "come_with_links"; 
 
 // 1. مسار التحقق (Webhook Verification)
 app.get('/', (req, res) => {
@@ -24,17 +26,16 @@ app.get('/', (req, res) => {
     res.status(403).send('Error');
 });
 
-// 2. استقبال الرسائل والرد بالقالب
+// 2. استقبال الرسائل والرد بالقالب الصحيح
 app.post('/', async (req, res) => {
     try {
         const body = req.body;
 
-        // التحقق من وصول رسالة نصية
         if (body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages) {
             const from = body.entry[0].changes[0].value.messages[0].from;
             console.log("وصلت رسالة من الرقم: " + from);
 
-            // إرسال القالب الترحيبي
+            // إرسال قالب come_with_links
             const response = await axios({
                 method: "POST",
                 url: `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
@@ -45,7 +46,7 @@ app.post('/', async (req, res) => {
                     template: {
                         name: templateName,
                         language: {
-                            code: "ar" // اللغة العربية كما في صورتك
+                            code: "ar" // اللغة العربية كما في صورتك للقالب
                         }
                     }
                 },
@@ -55,17 +56,15 @@ app.post('/', async (req, res) => {
                 }
             });
 
-            console.log("تم إرسال الرد الآلي بنجاح! استجابة فيسبوك:", response.status);
+            console.log("تم إرسال الرد الآلي بنجاح!");
             res.sendStatus(200);
         } else {
             res.sendStatus(404);
         }
     } catch (error) {
-        console.error("حدث خطأ أثناء الإرسال:");
+        console.error("حدث خطأ:");
         if (error.response) {
             console.error(JSON.stringify(error.response.data));
-        } else {
-            console.error(error.message);
         }
         res.sendStatus(500);
     }
@@ -73,5 +72,5 @@ app.post('/', async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-    console.log(`السيرفر شغال وجاهز لاستقبال الرسائل على بورت ${PORT}`);
+    console.log(`السيرفر شغال وجاهز على بورت ${PORT}`);
 });
