@@ -5,15 +5,14 @@ const app = express();
 
 app.use(bodyParser.json());
 
-// بياناتك الصحيحة
+// بياناتك
 const phoneNumberId = "989354214252486"; 
 const verifyToken = "mytoken123"; 
 const accessToken = process.env.ACCESS_TOKEN; 
 
-// اسم القالب الموجود في حسابك
 const templateName = "come_with_links"; 
 
-// 1. مسار التحقق (Webhook Verification)
+// 1. التحقق من Webhook
 app.get('/', (req, res) => {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
@@ -26,7 +25,7 @@ app.get('/', (req, res) => {
     res.status(403).send('Error');
 });
 
-// 2. استقبال الرسائل والرد بالقالب الصحيح
+// 2. استقبال الرسائل والرد بالقالب
 app.post('/', async (req, res) => {
     try {
         const body = req.body;
@@ -35,7 +34,7 @@ app.post('/', async (req, res) => {
             const from = body.entry[0].changes[0].value.messages[0].from;
             console.log("📩 وصلت رسالة من الرقم: " + from);
 
-            // إرسال قالب come_with_links
+            // إرسال قالب come_with_links بلغة ar
             const response = await axios({
                 method: "POST",
                 url: `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
@@ -45,7 +44,7 @@ app.post('/', async (req, res) => {
                     type: "template",
                     template: {
                         name: templateName,
-                        language: { code: "ar_AR" } // ✅ اللغة الصحيحة للقالب
+                        language: { code: "ar" } // ✅ اللغة الصحيحة حسب القالب المسجَّل
                     }
                 },
                 headers: {
@@ -70,5 +69,5 @@ app.post('/', async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-    console.log(`🚀 السيرفر شغال وجاهز على بورت ${PORT}`);
+    console.log(`🚀 السيرفر شغال على بورت ${PORT}`);
 });
