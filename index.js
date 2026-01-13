@@ -4,32 +4,36 @@ const axios = require('axios');
 const app = express();
 app.use(bodyParser.json());
 
-// المعلومات المستخرجة من صورك
+// البيانات المستخرجة من حسابك
 const phoneNumberId = "989354214252486"; 
 const verifyToken = "mytoken123"; 
 const accessToken = process.env.ACCESS_TOKEN; 
 
-// اسم القالب الخاص بك من الصورة
+// اسم القالب النشط من صورتك
 const templateName = "welcome_new"; 
 
+// 1. مسار التحقق لـ Webhook
 app.get('/', (req, res) => {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
+
     if (mode === 'subscribe' && token === verifyToken) {
         return res.status(200).send(challenge);
     }
     res.status(403).send('Error');
 });
 
+// 2. استقبال الرسائل والرد باستخدام القالب
 app.post('/', async (req, res) => {
-    const body = req.body;
-    if (body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages) {
-        const from = body.entry[0].changes[0].value.messages[0].from;
-        console.log("استلمت رسالة من: " + from);
+    try {
+        const body = req.body;
+        if (body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages) {
+            const from = body.entry[0].changes[0].value.messages[0].from;
+            
+            console.log("Message Received from: " + from);
 
-        try {
-            // إرسال القالب الاحترافي "welcome_new"
+            // إرسال رد باستخدام القالب welcome_new
             await axios({
                 method: "POST",
                 url: `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
@@ -40,7 +44,7 @@ app.post('/', async (req, res) => {
                     template: {
                         name: templateName,
                         language: {
-                            code: "ar" // اللغة العربية كما في الصورة
+                            code: "ar" // اللغة العربية كما يظهر في القالب
                         }
                     }
                 },
@@ -49,15 +53,17 @@ app.post('/', async (req, res) => {
                     "Authorization": `Bearer ${accessToken}`
                 }
             });
-            console.log("تم إرسال قالب الترحيب بنجاح!");
-        } catch (error) {
-            console.error("خطأ في إرسال القالب:", error.response ? error.response.data : error.message);
+
+            console.log("تم إرسال القالب الترحيبي بنجاح!");
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(404);
         }
-        res.sendStatus(200);
-    } else {
-        res.sendStatus(404);
+    } catch (error) {
+        console.error("خطأ في الإرسال:", error.response ? error.response.data : error.message);
+        res.sendStatus(500);
     }
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`السيرفر شغال ويستخدم القالب ${templateName}`));
+app.listen(PORT, () => console.log(`السيرفر شغال ويستخدم القالب: ${templateName}`));
