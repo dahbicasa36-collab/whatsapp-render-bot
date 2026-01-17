@@ -19,7 +19,7 @@ async function sendTemplate() {
         "to": RECIPIENT_PHONE,
         "type": "template",
         "template": {
-            "name": "come_with_links",
+            "name": "welcome_with_links",
             "language": { "code": "ar" }
         }
     };
