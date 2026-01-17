@@ -1,68 +1,48 @@
-const express = require('express');
-const bodyParser = require('body-parser');
 const axios = require('axios');
-const app = express();
 
-app.use(bodyParser.json());
+// --- إعدادات الحساب ---
+const TOKEN = 'ضع_هنا_الـ_Access_Token_الخاص_بك';
+const PHONE_NUMBER_ID = 'ضع_هنا_Phone_Number_ID'; // هذا هو رقم التعريف اللي في الصورة
+const RECIPIENT_PHONE = '212676064584'; // رقمك اللي غيوصلو الميساج
 
-const phoneNumberId = "989354214252486"; 
-const accessToken = process.env.ACCESS_TOKEN; 
+const url = `https://graph.facebook.com/v18.0/${PHONE_NUMBER_ID}/messages`;
 
-app.post('/', async (req, res) => {
+const headers = {
+    'Authorization': `Bearer ${TOKEN}`,
+    'Content-Type': 'application/json'
+};
+
+// وظيفة لإرسال الرسائل (قالب + صوت)
+async function startAutomatedReply() {
     try {
-        const body = req.body;
-        if (body.entry && body.entry[0].changes && body.entry[0].changes[0].value.messages) {
-            const from = body.entry[0].changes[0].value.messages[0].from;
+        // 1. إرسال القالب اللي فيه الرابط
+        console.log("إرسال القالب العربي...");
+        await axios.post(url, {
+            "messaging_product": "whatsapp",
+            "to": RECIPIENT_PHONE,
+            "type": "template",
+            "template": {
+                "name": "come_with_links",
+                "language": { "code": "ar" }
+            }
+        }, { headers });
 
-            // 1. إرسال القالب العربي (رابط المجموعة وشرح العمل)
-            await axios({
-                method: "POST",
-                url: `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
-                data: {
-                    messaging_product: "whatsapp",
-                    to: from,
-                    type: "template",
-                    template: {
-                        name: "welcome_with_links",
-                        language: { code: "ar" },
-                        components: [{
-                            type: "body",
-                            parameters: [
-                                { type: "text", text: "https://chat.whatsapp.com/FvfkX4uo7UbKVxoFP9KILH" }, // تم وضع رابط مجموعتك هنا
-                                { type: "text", text: "اضغط على الرابط أعلاه للانضمام" } // شرح العمل
-                            ]
-                        }]
-                    }
-                },
-                headers: { "Authorization": `Bearer ${accessToken}` }
-            });
+        // 2. إرسال المقطع الصوتي فوراً
+        console.log("إرسال المقطع الصوتي...");
+        await axios.post(url, {
+            "messaging_product": "whatsapp",
+            "to": RECIPIENT_PHONE,
+            "type": "audio",
+            "audio": {
+                "link": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
+            }
+        }, { headers });
 
-            // 2. إرسال ملف صوتي (Audio) تلقائياً بعد الرسالة الأولى
-            await axios({
-                method: "POST",
-                url: `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
-                data: {
-                    messaging_product: "whatsapp",
-                    to: from,
-                    type: "audio",
-                    audio: {
-                        // ملاحظة: يجب أن يكون هذا الرابط مباشراً لملف mp3
-                        link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
-                    }
-                },
-                headers: { "Authorization": `Bearer ${accessToken}` }
-            });
+        console.log("✅ تمت العملية بنجاح بدون الحاجة للمكتشف!");
 
-            res.sendStatus(200);
-        }
     } catch (error) {
-        console.error("Error:", error.response ? error.response.data : error.message);
-        res.sendStatus(500);
+        console.error("❌ وقع خطأ:", error.response ? error.response.data : error.message);
     }
-});
+}
 
-app.get('/', (req, res) => {
-    res.status(200).send(req.query['hub.challenge']);
-});
-
-app.listen(process.env.PORT || 10000);
+startAutomatedReply();
