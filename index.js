@@ -3,30 +3,26 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-// --- إعداداتك الخاصة ---
-const TOKEN = "حط_هنا_الساروت_الجديد_ديال_المكتشف"; 
+const TOKEN = "ضع_هنا_الساروت_الجديد_من_المكتشف"; 
 const PHONE_ID = "989354214252486";
-const AUDIO_URL = "حط_هنا_رابط_الأوديو_المزيان_ديالك";
-const VERIFY_TOKEN = "123456"; // هادي هي الكلمة اللي غتحط في خانة "رمز التحقق" في فيسبوك
+const AUDIO_URL = "ضع_رابط_الأوديو_الذي_عمل_معك_جيدا";
 
-// 1. هاد الجزء هو "المصافحة" اللي كيحتاجها فيسبوك باش يقبل الرابط (GET)
+// --- هدا هو الجزء الناقص للتحقق من Webhook ---
 app.get('/webhook', (req, res) => {
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    if (mode && token === VERIFY_TOKEN) {
+    if (mode && token === '123456') { // تأكد أن الرقم هنا هو 123456
         res.status(200).send(challenge);
     } else {
         res.sendStatus(403);
     }
 });
 
-// 2. هاد الجزء هو اللي كيتكلف بإرسال الرابط والأوديو (POST)
 app.post('/webhook', async (req, res) => {
     if (req.body.entry && req.body.entry[0].changes[0].value.messages) {
         let from = req.body.entry[0].changes[0].value.messages[0].from;
-
         try {
             // إرسال القالب مع الرابط
             await axios.post(`https://graph.facebook.com/v24.0/${PHONE_ID}/messages`, {
@@ -46,7 +42,7 @@ app.post('/webhook', async (req, res) => {
                 }
             }, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
 
-            // إرسال الأوديو موراها بـ 1 ثانية
+            // إرسال الأوديو
             setTimeout(async () => {
                 await axios.post(`https://graph.facebook.com/v24.0/${PHONE_ID}/messages`, {
                     messaging_product: "whatsapp",
@@ -55,12 +51,9 @@ app.post('/webhook', async (req, res) => {
                     audio: { link: AUDIO_URL }
                 }, { headers: { 'Authorization': `Bearer ${TOKEN}` } });
             }, 1000);
-
-        } catch (e) {
-            console.log("خطأ في الإرسال: ", e.message);
-        }
+        } catch (e) { console.log("Error"); }
     }
     res.sendStatus(200);
 });
 
-app.listen(process.env.PORT || 3000, () => console.log('البوت خدام بنجاح!'));
+app.listen(process.env.PORT || 3000);
